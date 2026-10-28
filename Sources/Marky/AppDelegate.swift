@@ -16,11 +16,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.onChange = { [weak self] in self?.updateIcon() }
         updateIcon()
 
-        hotKey = HotKey(keyCode: kVK_ANSI_D, modifiers: controlKey | optionKey) { [weak self] in
+        registerHotKey()
+        NotificationCenter.default.addObserver(forName: .bindingsChanged, object: nil, queue: .main) { [weak self] _ in
+            self?.registerHotKey()
+        }
+
+        let settings = SettingsWindowController.shared
+        // Пока записывается сочетание, хоткей снят, чтобы он не перехватывал нажатие.
+        settings.onRecording = { [weak self] recording in
+            if recording { self?.hotKey = nil } else { self?.registerHotKey() }
+        }
+        settings.canRegisterGlobal = { binding in
+            HotKey(keyCode: binding.keyCode, modifiers: binding.carbonModifiers) {} != nil
+        }
+    }
+
+    private func registerHotKey() {
+        hotKey = nil // иначе повторная регистрация того же сочетания не пройдёт
+        let binding = Bindings.binding(for: .toggle)
+        hotKey = HotKey(keyCode: binding.keyCode, modifiers: binding.carbonModifiers) { [weak self] in
             self?.overlay.toggle()
         }
         if hotKey == nil {
-            NSLog("Marky: не удалось зарегистрировать хоткей ⌃⌥D")
+            NSLog("Marky: не удалось зарегистрировать хоткей \(binding.label)")
         }
     }
 
@@ -45,13 +63,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let header = NSMenuItem(title: "Горячие клавиши", action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
-        for line in Self.shortcutLines {
+        for line in Self.shortcutLines() {
             let item = NSMenuItem(title: line, action: nil, keyEquivalent: "")
             item.isEnabled = false
             item.indentationLevel = 1
             menu.addItem(item)
         }
         menu.addItem(.separator())
+
+        let settings = NSMenuItem(title: "Настройки…", action: #selector(openSettings), keyEquivalent: "")
+        settings.target = self
+        menu.addItem(settings)
 
         let login = NSMenuItem(title: "Запускать при входе в систему",
                                action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
@@ -65,22 +87,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(quit)
     }
 
-    private static let shortcutLines = [
-        "⌃⌥D — включить / выключить рисование",
-        "F — свободная линия",
-        "A — стрелка",
-        "R — прямоугольник",
-        "C — окружность",
-        "1 / 2 / 3 / 4 — красный / жёлтый / синий / зелёный",
-        "[ / ] — тоньше / толще",
-        "⇧ — прямая линия, квадрат, круг",
-        "⌘Z — отменить последнюю фигуру",
-        "⌫ — очистить всё",
-        "Esc — выйти",
-    ]
+    private static func shortcutLines() -> [String] {
+        var lines = Action.allCases.map { "\(Bindings.binding(for: $0).label) — \($0.title.lowercased())" }
+        lines += [
+            "⇧ — прямая линия, квадрат, круг",
+            "⌘Z — отменить последнюю фигуру",
+            "⌫ — очистить всё",
+            "Esc — выйти",
+        ]
+        return lines
+    }
 
     @objc private func toggleOverlay() {
         overlay.toggle()
+    }
+
+    @objc private func openSettings() {
+        overlay.hide()
+        SettingsWindowController.shared.show()
     }
 
     @objc private func toggleLaunchAtLogin() {

@@ -23,7 +23,7 @@ cp -R build/Marky.app /Applications/
 
 | Действие | Клавиша |
 |---|---|
-| Включить / выключить режим | `⌃⌥D` |
+| Включить / выключить режим | `⌃⌥D` (настраивается) |
 | Свободная линия / стрелка / прямоугольник / окружность | `F` / `A` / `R` / `C` |
 | Красный / жёлтый / синий / зелёный | `1` / `2` / `3` / `4` |
 | Тоньше / толще (1–20) | `[` / `]` |
@@ -32,6 +32,8 @@ cp -R build/Marky.app /Applications/
 | Очистить всё | `⌫` |
 | Выйти (рисунок стирается) | `Esc` |
 
+Все клавиши, кроме `Esc`, `⌘Z`, `⌫` и `⇧`, меняются в меню трея: «Настройки…». «Сбросить по умолчанию» возвращает таблицу выше.
+
 ## Структура
 
 - `Sources/Marky/AppDelegate.swift` — иконка и меню в трее, автозапуск
@@ -39,4 +41,6 @@ cp -R build/Marky.app /Applications/
 - `Sources/Marky/OverlayWindow.swift` — прозрачное окно на экране с курсором
 - `Sources/Marky/OverlayView.swift` — ввод и отрисовка
 - `Sources/Marky/Shape.swift` — фигуры
+- `Sources/Marky/Bindings.swift` — шорткаты, проверки и сохранение
+- `Sources/Marky/SettingsWindow.swift` — окно настройки шорткатов
 - `Sources/Marky/Settings.swift` — палитра и сохраняемые настройки

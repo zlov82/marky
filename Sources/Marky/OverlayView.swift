@@ -90,7 +90,7 @@ final class OverlayView: NSView {
         needsDisplay = true
     }
 
-    // MARK: Клавиши (по кодам клавиш, чтобы работало в любой раскладке)
+    // MARK: Клавиши (по кодам клавиш, чтобы работало в любой раскладке; назначения в Bindings)
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
@@ -105,20 +105,22 @@ final class OverlayView: NSView {
         let flags = event.modifierFlags.intersection([.command, .control, .option])
         guard flags.isEmpty else { return }
 
-        switch Int(event.keyCode) {
-        case kVK_Escape: onExit?()
-        case kVK_Delete: clear()
-        case kVK_ANSI_F: select(.freehand)
-        case kVK_ANSI_A: select(.arrow)
-        case kVK_ANSI_R: select(.rectangle)
-        case kVK_ANSI_C: select(.circle)
-        case kVK_ANSI_1: select(color: 0)
-        case kVK_ANSI_2: select(color: 1)
-        case kVK_ANSI_3: select(color: 2)
-        case kVK_ANSI_4: select(color: 3)
-        case kVK_ANSI_LeftBracket: changeWidth(by: -1)
-        case kVK_ANSI_RightBracket: changeWidth(by: 1)
-        default: break
+        let code = Int(event.keyCode)
+        if code == kVK_Escape { onExit?(); return }
+        if code == kVK_Delete { clear(); return }
+
+        switch Bindings.action(forKeyCode: code) {
+        case .freehand: select(.freehand)
+        case .arrow: select(.arrow)
+        case .rectangle: select(.rectangle)
+        case .circle: select(.circle)
+        case .red: select(color: 0)
+        case .yellow: select(color: 1)
+        case .blue: select(color: 2)
+        case .green: select(color: 3)
+        case .thinner: changeWidth(by: -1)
+        case .thicker: changeWidth(by: 1)
+        case .toggle, nil: break
         }
     }
 
